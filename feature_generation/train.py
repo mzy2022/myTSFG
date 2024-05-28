@@ -197,7 +197,7 @@ def cal_reward(args, data_infomation,batchs, scores_b, type, metric, y):
 
 
 def get_reward(x, y, args, type, metric):
-    if type == "classify":
+    if type == "cls":
         clf = RandomForestClassifier(n_estimators=10, random_state=0)
         scores = cross_val_score(clf, x, y, scoring='f1_micro', cv=5)
     else:
