@@ -3,6 +3,7 @@ import os
 import sys
 import numpy as np
 import pandas as pd
+from sklearn.feature_selection import SelectKBest, mutual_info_regression
 from sklearn.tree import DecisionTreeClassifier
 
 
@@ -70,33 +71,42 @@ def get_action(n_features_c, n_features_d):
 
 
 def get_binning_df(args, df, v_columns, d_columns, type):
-    new_df = pd.DataFrame()
-    new_v_columns = []
-    new_d_columns = []
-    label = df.loc[:, args.target]
-    if type == 'classify':
-        for col in v_columns:
-            new_df[col] = df[col]
-            new_v_columns.append(col)
-        for col in v_columns:
-            ori_fe = np.array(df[col])
-            label = np.array(label)
-            new_fe = binning(ori_fe, label)
-            new_name = 'bin_' + col
-            new_df[new_name] = new_fe
-            new_d_columns.append(new_name)
-        for col in d_columns:
-            new_df[col] = df[col]
-            new_d_columns.append(col)
-
+    if df.shape[1] > 1000:
+        X = df.iloc[:,:-1]
+        y = df.iloc[:,-1]
+        selector = SelectKBest(score_func=mutual_info_regression, k=100)
+        X_new = selector.fit_transform(X, y)
+        new_df = pd.concat([X_new,y],axis=1)
+        new_v_columns = list(X_new.columns)
+        new_d_columns = []
     else:
-        for col in v_columns:
-            new_df[col] = df[col]
-            new_v_columns.append(col)
-        for col in d_columns:
-            new_df[col] = df[col]
-            new_d_columns.append(col)
-    new_df[args.target] = label
+        new_df = pd.DataFrame()
+        new_v_columns = []
+        new_d_columns = []
+        label = df.loc[:, args.target]
+        if type == 'classify':
+            for col in v_columns:
+                new_df[col] = df[col]
+                new_v_columns.append(col)
+            for col in v_columns:
+                ori_fe = np.array(df[col])
+                label = np.array(label)
+                new_fe = binning(ori_fe, label)
+                new_name = 'bin_' + col
+                new_df[new_name] = new_fe
+                new_d_columns.append(new_name)
+            for col in d_columns:
+                new_df[col] = df[col]
+                new_d_columns.append(col)
+
+        else:
+            for col in v_columns:
+                new_df[col] = df[col]
+                new_v_columns.append(col)
+            for col in d_columns:
+                new_df[col] = df[col]
+                new_d_columns.append(col)
+        new_df[args.target] = label
     return new_df, new_v_columns, new_d_columns
 
 
