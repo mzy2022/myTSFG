@@ -31,9 +31,9 @@ class TSFG:
         self.target = data_info['target']
         args.target = self.target
         self.type = data_info['type']
-        if self.type == 'classify':
+        if self.type == 'cls':
             self.metric = 'f1'
-        elif self.type == 'regression':
+        elif self.type == 'reg':
             self.metric = 'rae'
         self.v_columns = data_info['v_columns']
         self.d_columns = data_info['d_columns']
@@ -51,12 +51,12 @@ class TSFG:
         df = self.ori_df
         v_columns, d_columns = self.v_columns, self.d_columns
         target, type, metric = self.target, self.type, self.metric
-        new_df, new_v_columns, new_d_columns = get_binning_df(args, df, v_columns, d_columns, type)
+        score_ori, scores_ori = self.data_scores(df, args, type, metric)
+        logging.info(f'score_ori={score_ori}')
+        new_df, new_v_columns, new_d_columns,v_columns,d_columns,df = get_binning_df(args, df, v_columns, d_columns, type)
         n_features_c, n_features_d = len(new_v_columns), len(new_d_columns)
         c_generation, d_generation, sps = get_action(n_features_c, n_features_d)
         score_b, scores_b = self.data_scores(new_df, args, type, metric)
-        score_ori, scores_ori = self.data_scores(df, args, type, metric)
-        logging.info(f'score_ori={score_ori}')
         df_c, df_d = new_df.loc[:, new_v_columns + [target]], new_df.loc[:, new_d_columns + [target]]
         ori_continuous_data = df.loc[:, v_columns]
         df_label = new_df.loc[:, target]
@@ -116,7 +116,7 @@ class TSFG:
         y = df[target]
         label_encoder = LabelEncoder()
         y = label_encoder.fit_transform(y)
-        if type == "classify":
+        if type == "cls":
             clf = RandomForestClassifier(n_estimators=10, random_state=0)
             scores = cross_val_score(clf, X, y, scoring='f1_micro', cv=5)
         else:
@@ -141,7 +141,7 @@ if __name__ == '__main__':
     parser.add_argument("--epochs", type=int, default=200)
     parser.add_argument("--steps_num", type=int, default=6)
     parser.add_argument("--episodes", type=int, default=5)
-    parser.add_argument("--file_name", type=str, default='airfoil')
+    parser.add_argument("--file_name", type=str, default='PimaIndian')
     parser.add_argument("--seed", type=int, default=1, help='seed')
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument('--memory', type=int, default=24, help='memory capacity')
