@@ -72,7 +72,6 @@ def get_action(n_features_c, n_features_d):
 
 def get_binning_df(args, df, v_columns, d_columns, type):
     if df.shape[1] > 1000:
-
         X = df.iloc[:,:-1]
         y = df.iloc[:,-1]
         selector = SelectKBest(score_func=mutual_info_regression, k=100)
